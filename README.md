@@ -7,12 +7,15 @@ to scan its vulnerabilities this will be useful for bug hunters and web penteste
 i developed it for fun and to have a nice time 
 and to improve my skills in web exploitation and scripting
 
+## Tested on
+- [Metasploitable2](https://sourceforge.net/projects/metasploitable/files/Metasploitable2/)
+- [owaspBWA](https://sourceforge.net/projects/owaspbwa/)
+
 ## Download & Setup
 ```
 git clone https://github.com/abdallah-elsharif/DVWASPloit.git
 cd DVWASPloit
-pip3 install requests
-pip3 install netifaces
+pip3 install -r requirements.txt
 ```
 
 ```
