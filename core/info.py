@@ -21,9 +21,9 @@ class Info:
         if self.path:
             print(f"Path            :   {self.path}")
         print(f"Date            :   {self.date}")
-        print(f"Server          :   {self.server}")
+        if self.server:
+            print(f"Server          :   {self.server}")
         if self.technology:
             print(f"Technology      :   {self.technology}")
 
         print()
-

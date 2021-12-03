@@ -39,13 +39,18 @@ def ip_on_same_network(ip):
             ip2 = ni.ifaddresses(i[1])[ni.AF_INET][0]['addr']
             if IPNetwork(f"{ip}/255.255.255.0") == IPNetwork(f"{ip2}/255.255.255.0"):
                 return ip2
-        except ValueError:
+        except:
             continue
-        except KeyError:
-            continue
+
 
 def get_public_ip():
     return requests.get('https://api.ipify.org').text
+
+
+def get_my_ip(server_host):
+    internal_host = ip_on_same_network(server_host) 
+    return internal_host if internal_host else get_public_ip()
+    
 
 def check_connection(url):
     try:
